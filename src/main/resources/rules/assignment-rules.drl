@@ -1,0 +1,301 @@
+package rules
+
+import sbnz.szrn.model.Assistant;
+import sbnz.szrn.model.Subject;
+import sbnz.szrn.model.Preference;
+import sbnz.szrn.model.PreviousAssignment;
+import sbnz.szrn.model.SpecificRequest;
+import sbnz.szrn.model.Candidate;
+import sbnz.szrn.model.AssignmentResult;
+
+
+rule "Visoka preferenca kreira kandidata"
+salience 100
+when
+    $p : Preference(
+        $assistant : assistant,
+        $subject : subject,
+        grade == 5
+    )
+
+    not Candidate(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    Candidate candidate = new Candidate(
+        $assistant,
+        $subject,
+        50,
+        "Asistent ima visoku preferencu za predmet."
+    );
+
+    insert(candidate);
+
+    System.out.println(
+        "[PRAVILO] Visoka preferenca kreirala kandidata: "
+        + $assistant.getName()
+        + " - "
+        + $subject.getName()
+    );
+end
+
+
+rule "Srednja preferenca kreira kandidata"
+salience 90
+when
+    $p : Preference(
+        $assistant : assistant,
+        $subject : subject,
+        (grade == 3 || grade == 4)
+    )
+
+    not Candidate(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    Candidate candidate = new Candidate(
+        $assistant,
+        $subject,
+        25,
+        "Asistent ima srednju preferencu za predmet."
+    );
+
+    insert(candidate);
+
+    System.out.println(
+        "[PRAVILO] Srednja preferenca kreirala kandidata: "
+        + $assistant.getName()
+        + " - "
+        + $subject.getName()
+    );
+end
+
+
+rule "Specificni zahtev visokog prioriteta kreira jakog kandidata"
+salience 110
+when
+    $r : SpecificRequest(
+        $assistant : assistant,
+        $subject : subject,
+        priority >= 5
+    )
+
+    not Candidate(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    Candidate candidate = new Candidate(
+        $assistant,
+        $subject,
+        100,
+        "Postoji specifičan zahtev visokog prioriteta."
+    );
+
+    insert(candidate);
+
+    System.out.println(
+        "[PRAVILO] Specifičan zahtev kreirao kandidata: "
+        + $assistant.getName()
+        + " - "
+        + $subject.getName()
+    );
+end
+
+
+rule "Prethodno drzanje predmeta povecava score"
+salience 50
+no-loop true
+when
+    $c : Candidate(
+        $assistant : assistant,
+        $subject : subject
+    )
+
+    PreviousAssignment(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    $c.setScore($c.getScore() + 20);
+
+    $c.setExplanation(
+        $c.getExplanation()
+        + " Asistent je prethodne godine držao isti predmet."
+    );
+
+    update($c);
+
+    System.out.println(
+        "[PRAVILO] Povećan score zbog prethodnog držanja: "
+        + $assistant.getName()
+        + " - "
+        + $subject.getName()
+        + ", score = "
+        + $c.getScore()
+    );
+end
+
+
+rule "Kazna za preopterecenje asistenta"
+salience 40
+no-loop true
+when
+    $c : Candidate(
+        $assistant : assistant,
+        $subject : subject
+    )
+
+    eval(
+        $assistant.getCurrentLoad()
+        + $subject.getTotalHours()
+        >
+        $assistant.getTargetLoad()
+    )
+then
+    $c.setScore($c.getScore() - 30);
+
+    $c.setExplanation(
+        $c.getExplanation()
+        + " Dodela bi prekoračila ciljano opterećenje."
+    );
+
+    update($c);
+
+    System.out.println(
+        "[PRAVILO] Kandidat kažnjen zbog preopterećenja: "
+        + $assistant.getName()
+        + " - "
+        + $subject.getName()
+        + ", score = "
+        + $c.getScore()
+    );
+end
+
+
+rule "Najbolji kandidat dobija predmet"
+salience -10
+when
+    $c : Candidate(
+        $assistant : assistant,
+        $subject : subject,
+        $score : score,
+        score >= 5
+    )
+
+    not Candidate(
+        subject == $subject,
+        score > $score
+    )
+
+    not AssignmentResult(
+        subject == $subject
+    )
+then
+    AssignmentResult result =
+        new AssignmentResult(
+            $assistant,
+            $subject,
+            $subject.getTotalHours(),
+            "Najveci score kandidata. "
+            + $c.getExplanation()
+        );
+
+    insert(result);
+
+    System.out.println(
+        "[FINAL] "
+        + $assistant.getName()
+        + " dobija predmet "
+        + $subject.getName()
+        + ", score = "
+        + $score
+    );
+end
+
+
+rule "Asistent ima previse casova"
+when
+    $a : Assistant(
+        $name : name
+    )
+
+    $total : Number(
+        intValue > 30
+    )
+    from accumulate(
+        AssignmentResult(
+            assistant == $a,
+            $h : assignedHours
+        ),
+        sum($h)
+    )
+then
+    System.out.println(
+        "[ACCUMULATE] "
+        + $name
+        + " ima ukupno "
+        + $total
+        + " casova."
+    );
+end
+
+
+rule "Broj predmeta po asistentu"
+when
+    $a : Assistant(
+        $name : name
+    )
+
+    $count : Number(
+        intValue > 2
+    )
+    from accumulate(
+        AssignmentResult(
+            assistant == $a
+        ),
+        count(1)
+    )
+then
+    System.out.println(
+        "[ACCUMULATE] "
+        + $name
+        + " drzi vise od 2 predmeta."
+    );
+end
+
+rule "Izracunaj ukupno opterecenje"
+when
+
+    $a : Assistant($name : name)
+
+    $total : Number(
+        intValue >= 0
+    ) from accumulate(
+
+        AssignmentResult(
+            assistant == $a,
+            $h : assignedHours
+        ),
+
+        sum($h)
+    )
+
+then
+
+    $a.setCurrentLoad(
+            $total.intValue()
+    );
+
+    update($a);
+
+    System.out.println(
+            "[ACCUMULATE] "
+            + $name
+            + " load = "
+            + $total
+    );
+
+end

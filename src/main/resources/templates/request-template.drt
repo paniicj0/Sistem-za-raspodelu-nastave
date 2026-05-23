@@ -1,0 +1,54 @@
+template header
+
+assistant
+subject
+priority
+
+package rules
+
+import sbnz.szrn.model.AssignmentResult
+import sbnz.szrn.model.Assistant
+import sbnz.szrn.model.Subject
+import sbnz.szrn.model.Preference
+import sbnz.szrn.model.Candidate
+
+template "requestTemplate"
+
+rule "Specific request @{assistant} @{subject}"
+
+salience @{priority}0
+
+when
+
+    $p : Preference(
+        assistant.name == "@{assistant}",
+        subject.name == "@{subject}"
+    )
+
+    not Candidate(
+        assistant == $p.getAssistant(),
+        subject == $p.getSubject()
+    )
+
+then
+
+    Candidate candidate =
+            new Candidate(
+                    $p.getAssistant(),
+                    $p.getSubject(),
+                    @{priority} * 20,
+                    "Specifican zahtev visokog prioriteta"
+            );
+
+    insert(candidate);
+
+    System.out.println(
+            "[TEMPLATE RULE] "
+            + "@{assistant}"
+            + " -> "
+            + "@{subject}"
+    );
+
+end
+
+end template
