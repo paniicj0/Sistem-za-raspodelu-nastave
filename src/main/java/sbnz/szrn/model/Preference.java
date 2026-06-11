@@ -1,5 +1,13 @@
 package sbnz.szrn.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class Preference {
 
     private int id;
@@ -7,24 +15,12 @@ public class Preference {
     private Subject subject;
     private int grade;
 
-    public Preference() {
-    }
-
-    public Preference(Assistant assistant, Subject subject, int grade) {
+    public Preference(int id, Assistant assistant, Subject subject, int grade) {
+        this.id = id;
         this.assistant = assistant;
         this.subject = subject;
         this.grade = grade;
     }
 
-    public Assistant getAssistant() {
-        return assistant;
-    }
 
-    public Subject getSubject() {
-        return subject;
-    }
-
-    public int getGrade() {
-        return grade;
-    }
 }

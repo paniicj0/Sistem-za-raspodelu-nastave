@@ -1,32 +1,21 @@
 package sbnz.szrn.model;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class RequestTemplateData {
 
-    private String assistant;
-    private String subject;
+    private String assistantName;
+    private String subjectName;
     private int priority;
 
-    public RequestTemplateData() {}
-
-    public RequestTemplateData(
-            String assistant,
-            String subject,
-            int priority
-    ) {
-        this.assistant = assistant;
-        this.subject = subject;
+    public RequestTemplateData(String assistantName, String subjectName, int priority) {
+        this.assistantName = assistantName;
+        this.subjectName = subjectName;
         this.priority = priority;
-    }
-
-    public String getAssistant() {
-        return assistant;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public int getPriority() {
-        return priority;
     }
 }

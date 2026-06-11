@@ -1,41 +1,35 @@
 package sbnz.szrn.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@Getter
+@Setter
 public class AssignmentResult {
 
+    private int id;
     private Assistant assistant;
     private Subject subject;
     private int assignedHours;
     private String explanation;
+    private int score;
 
-    public AssignmentResult() {
-    }
-
-    public AssignmentResult(Assistant assistant, Subject subject, int assignedHours, String explanation) {
+    public AssignmentResult(
+            int id,
+            Assistant assistant,
+            Subject subject,
+            int assignedHours,
+            int score,
+            String explanation
+    ) {
+        this.id = id;
         this.assistant = assistant;
         this.subject = subject;
         this.assignedHours = assignedHours;
+        this.score = score;
         this.explanation = explanation;
-    }
-
-    public Assistant getAssistant() {
-        return assistant;
-    }
-
-    public Subject getSubject() {
-        return subject;
-    }
-
-    public int getAssignedHours() {
-        return assignedHours;
-    }
-
-    public String getExplanation() {
-        return explanation;
-    }
-
-    @Override
-    public String toString() {
-        return "Predmet '" + subject.getName() + "' dodeljen asistentu " + assistant.getName()
-                + " (" + assignedHours + " časova). Razlog: " + explanation;
     }
 }

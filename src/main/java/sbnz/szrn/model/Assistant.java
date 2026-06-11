@@ -1,44 +1,45 @@
 package sbnz.szrn.model;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
+@AllArgsConstructor
+@Getter
+@NoArgsConstructor
 public class Assistant {
 
     private int id;
     private String name;
-    private int currentLoad;
     private int targetLoad;
-    private int subjectsInSemester;
+    private int winterLoad;
+    private int summerLoad;
+    private int maxLoad;
+    private boolean placeholder;
 
-    public Assistant() {
-    }
 
-    public Assistant(String name, int currentLoad, int targetLoad, int subjectsInSemester) {
+    public Assistant(int id, String name, int targetLoad, int winterLoad, int summerLoad) {
+        this.id = id;
         this.name = name;
-        this.currentLoad = currentLoad;
         this.targetLoad = targetLoad;
-        this.subjectsInSemester = subjectsInSemester;
+        this.winterLoad = winterLoad;
+        this.summerLoad = summerLoad;
+        this.maxLoad = targetLoad + 10;
+        this.placeholder = false;
     }
 
-    public String getName() {
-        return name;
+    public int getTotalLoad() {
+        return winterLoad + summerLoad;
     }
 
-    public int getCurrentLoad() {
-        return currentLoad;
-    }
-
-    public int getTargetLoad() {
-        return targetLoad;
-    }
-
-    public int getSubjectsInSemester() {
-        return subjectsInSemester;
-    }
-
-    public void setCurrentLoad(int currentLoad) {
-        this.currentLoad = currentLoad;
+    public void addLoad(int semester, int hours) {
+        if (semester == 1) {
+            winterLoad += hours;
+        } else {
+            summerLoad += hours;
+        }
     }
 }

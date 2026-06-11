@@ -1,5 +1,6 @@
 package rules
 
+import sbnz.szrn.model.ValidationMessage;
 import sbnz.szrn.model.Assistant;
 import sbnz.szrn.model.Subject;
 import sbnz.szrn.model.Preference;
@@ -8,8 +9,7 @@ import sbnz.szrn.model.SpecificRequest;
 import sbnz.szrn.model.Candidate;
 import sbnz.szrn.model.AssignmentResult;
 
-
-rule "Visoka preferenca kreira kandidata"
+rule "High preference creates candidate"
 salience 100
 when
     $p : Preference(
@@ -24,30 +24,32 @@ when
     )
 then
     Candidate candidate = new Candidate(
+        0,
         $assistant,
         $subject,
         50,
-        "Asistent ima visoku preferencu za predmet."
+        "Visoka preferenca."
     );
 
     insert(candidate);
 
     System.out.println(
-        "[PRAVILO] Visoka preferenca kreirala kandidata: "
+        "[RULE] High preference creates candidate: "
         + $assistant.getName()
-        + " - "
+        + " -> "
         + $subject.getName()
     );
 end
 
 
-rule "Srednja preferenca kreira kandidata"
+rule "Medium preference creates candidate"
 salience 90
 when
     $p : Preference(
         $assistant : assistant,
         $subject : subject,
-        (grade == 3 || grade == 4)
+        grade >= 3,
+        grade <= 4
     )
 
     not Candidate(
@@ -56,60 +58,29 @@ when
     )
 then
     Candidate candidate = new Candidate(
+        0,
         $assistant,
         $subject,
         25,
-        "Asistent ima srednju preferencu za predmet."
+        "Srednja preferenca."
     );
 
     insert(candidate);
 
     System.out.println(
-        "[PRAVILO] Srednja preferenca kreirala kandidata: "
+        "[RULE] Medium preference creates candidate: "
         + $assistant.getName()
-        + " - "
+        + " -> "
         + $subject.getName()
     );
 end
 
 
-rule "Specificni zahtev visokog prioriteta kreira jakog kandidata"
-salience 110
-when
-    $r : SpecificRequest(
-        $assistant : assistant,
-        $subject : subject,
-        priority >= 5
-    )
-
-    not Candidate(
-        assistant == $assistant,
-        subject == $subject
-    )
-then
-    Candidate candidate = new Candidate(
-        $assistant,
-        $subject,
-        100,
-        "Postoji specifičan zahtev visokog prioriteta."
-    );
-
-    insert(candidate);
-
-    System.out.println(
-        "[PRAVILO] Specifičan zahtev kreirao kandidata: "
-        + $assistant.getName()
-        + " - "
-        + $subject.getName()
-    );
-end
-
-
-rule "Prethodno drzanje predmeta povecava score"
+rule "Previous assignment increases score"
 salience 50
-no-loop true
 when
     $c : Candidate(
+        previousAssignmentApplied == false,
         $assistant : assistant,
         $subject : subject
     )
@@ -119,71 +90,66 @@ when
         subject == $subject
     )
 then
-    $c.setScore($c.getScore() + 20);
-
-    $c.setExplanation(
-        $c.getExplanation()
-        + " Asistent je prethodne godine držao isti predmet."
+    $c.addScore(
+        20,
+        "Asistent je prethodno drzao predmet."
     );
+
+    $c.setPreviousAssignmentApplied(true);
 
     update($c);
 
     System.out.println(
-        "[PRAVILO] Povećan score zbog prethodnog držanja: "
+        "[RULE] Previous assignment increases score: "
         + $assistant.getName()
-        + " - "
+        + " -> "
         + $subject.getName()
-        + ", score = "
+        + " | score = "
         + $c.getScore()
     );
 end
 
 
-rule "Kazna za preopterecenje asistenta"
+rule "Overload penalty"
 salience 40
-no-loop true
 when
     $c : Candidate(
+        overloadPenaltyApplied == false,
         $assistant : assistant,
         $subject : subject
     )
 
-    eval(
-        $assistant.getCurrentLoad()
-        + $subject.getTotalHours()
-        >
-        $assistant.getTargetLoad()
-    )
+    eval($assistant.getTotalLoad() + $subject.getTotalHours() > $assistant.getTargetLoad())
 then
-    $c.setScore($c.getScore() - 30);
-
-    $c.setExplanation(
-        $c.getExplanation()
-        + " Dodela bi prekoračila ciljano opterećenje."
+    $c.addScore(
+        -30,
+        "Dodela bi prekoracila ciljano opterecenje."
     );
+
+    $c.setOverloadPenaltyApplied(true);
 
     update($c);
 
     System.out.println(
-        "[PRAVILO] Kandidat kažnjen zbog preopterećenja: "
+        "[RULE] Overload penalty: "
         + $assistant.getName()
-        + " - "
+        + " -> "
         + $subject.getName()
-        + ", score = "
+        + " | score = "
         + $c.getScore()
     );
 end
 
-
-rule "Najbolji kandidat dobija predmet"
+rule "Best candidate gets small subject"
 salience -10
 when
     $c : Candidate(
         $assistant : assistant,
         $subject : subject,
-        $score : score,
-        score >= 5
+        $score : score
     )
+
+    eval(!$subject.isLargeSubject())
 
     not Candidate(
         subject == $subject,
@@ -194,108 +160,231 @@ when
         subject == $subject
     )
 then
-    AssignmentResult result =
-        new AssignmentResult(
-            $assistant,
-            $subject,
-            $subject.getTotalHours(),
-            "Najveci score kandidata. "
-            + $c.getExplanation()
-        );
+    AssignmentResult result = new AssignmentResult(
+        0,
+        $assistant,
+        $subject,
+        $subject.getTotalHours(),
+        $score,
+        "Najbolji kandidat za manji predmet. " + $c.getExplanation()
+    );
+
+    $assistant.addLoad($subject.getSemester(), $subject.getTotalHours());
+    update($assistant);
 
     insert(result);
 
     System.out.println(
-        "[FINAL] "
+        "[RESULT] "
         + $assistant.getName()
-        + " dobija predmet "
+        + " dobija manji predmet "
         + $subject.getName()
-        + ", score = "
+        + " | hours = "
+        + $subject.getTotalHours()
+        + " | score = "
         + $score
     );
 end
 
+rule "Best candidate gets first part of large subject"
+salience -10
+when
+    $c : Candidate(
+        $assistant : assistant,
+        $subject : subject,
+        $score : score
+    )
 
-rule "Asistent ima previse casova"
+    eval($subject.isLargeSubject())
+
+    not Candidate(
+        subject == $subject,
+        score > $score
+    )
+
+    not AssignmentResult(
+        subject == $subject,
+        assistant == $assistant
+    )
+then
+    int hours = $subject.getFirstHalfHours();
+
+    AssignmentResult result = new AssignmentResult(
+        0,
+        $assistant,
+        $subject,
+        hours,
+        $score,
+        "Najbolji kandidat za prvi deo velikog predmeta. " + $c.getExplanation()
+    );
+
+    $assistant.addLoad($subject.getSemester(), hours);
+    update($assistant);
+
+    insert(result);
+
+    System.out.println(
+        "[RESULT] "
+        + $assistant.getName()
+        + " dobija prvi deo velikog predmeta "
+        + $subject.getName()
+        + " | hours = "
+        + hours
+        + " | score = "
+        + $score
+    );
+end
+
+rule "Second best candidate gets second part of large subject"
+salience -20
+when
+    $first : AssignmentResult(
+        $subject : subject,
+        $firstAssistant : assistant
+    )
+
+    eval($subject.isLargeSubject())
+
+    $c : Candidate(
+        subject == $subject,
+        assistant != $firstAssistant,
+        $assistant : assistant,
+        $score : score
+    )
+
+    not Candidate(
+        subject == $subject,
+        assistant != $firstAssistant,
+        score > $score
+    )
+
+    not AssignmentResult(
+        subject == $subject,
+        assistant == $assistant
+    )
+then
+    int hours = $subject.getSecondHalfHours();
+
+    AssignmentResult result = new AssignmentResult(
+        0,
+        $assistant,
+        $subject,
+        hours,
+        $score,
+        "Drugi najbolji kandidat za drugi deo velikog predmeta. " + $c.getExplanation()
+    );
+
+    $assistant.addLoad($subject.getSemester(), hours);
+    update($assistant);
+
+    insert(result);
+
+    System.out.println(
+        "[RESULT] "
+        + $assistant.getName()
+        + " dobija drugi deo velikog predmeta "
+        + $subject.getName()
+        + " | hours = "
+        + hours
+        + " | score = "
+        + $score
+    );
+end
+
+rule "Validate overloaded assistant"
+salience -100
 when
     $a : Assistant(
+        $name : name,
+        $targetLoad : targetLoad
+    )
+
+    eval($a.getTotalLoad() > $targetLoad)
+
+    not ValidationMessage(
+        message == "Asistent " + $name + " je preopterecen."
+    )
+then
+    insert(new ValidationMessage(
+        0,
+        "WARNING",
+        "Asistent " + $name + " je preopterecen."
+    ));
+
+    System.out.println(
+        "[VALIDATION] Asistent "
+        + $name
+        + " je preopterecen. Total = "
+        + $a.getTotalLoad()
+        + ", target = "
+        + $targetLoad
+    );
+end
+
+rule "Validate unassigned subject"
+salience -100
+when
+    $s : Subject(
         $name : name
     )
 
-    $total : Number(
-        intValue > 30
+    not AssignmentResult(
+        subject == $s
     )
-    from accumulate(
-        AssignmentResult(
-            assistant == $a,
-            $h : assignedHours
-        ),
-        sum($h)
+
+    not ValidationMessage(
+        message == "Predmet " + $name + " nije rasporedjen."
     )
 then
+    insert(new ValidationMessage(
+        0,
+        "ERROR",
+        "Predmet " + $name + " nije rasporedjen."
+    ));
+
     System.out.println(
-        "[ACCUMULATE] "
+        "[VALIDATION] Predmet "
         + $name
-        + " ima ukupno "
-        + $total
+        + " nije rasporedjen."
+    );
+end
+
+rule "Validate assigned subject hours"
+salience -100
+when
+    $s : Subject(
+        $name : name,
+        $totalHours : totalHours
+    )
+
+    $assignedHours : Number()
+    from accumulate(
+        AssignmentResult(
+            subject == $s,
+            $hours : assignedHours
+        ),
+        sum($hours)
+    )
+
+    eval($assignedHours.intValue() != $totalHours)
+
+    not ValidationMessage(
+        message == "Predmet " + $name + " nema ispravan broj dodeljenih casova."
+    )
+then
+    insert(new ValidationMessage(
+        0,
+        "ERROR",
+        "Predmet " + $name + " nema ispravan broj dodeljenih casova."
+    ));
+
+    System.out.println(
+        "[VALIDATION] Predmet "
+        + $name
+        + " ima dodeljeno "
+        + $assignedHours
+        + " od "
+        + $totalHours
         + " casova."
     );
-end
-
-
-rule "Broj predmeta po asistentu"
-when
-    $a : Assistant(
-        $name : name
-    )
-
-    $count : Number(
-        intValue > 2
-    )
-    from accumulate(
-        AssignmentResult(
-            assistant == $a
-        ),
-        count(1)
-    )
-then
-    System.out.println(
-        "[ACCUMULATE] "
-        + $name
-        + " drzi vise od 2 predmeta."
-    );
-end
-
-rule "Izracunaj ukupno opterecenje"
-when
-
-    $a : Assistant($name : name)
-
-    $total : Number(
-        intValue >= 0
-    ) from accumulate(
-
-        AssignmentResult(
-            assistant == $a,
-            $h : assignedHours
-        ),
-
-        sum($h)
-    )
-
-then
-
-    $a.setCurrentLoad(
-            $total.intValue()
-    );
-
-    update($a);
-
-    System.out.println(
-            "[ACCUMULATE] "
-            + $name
-            + " load = "
-            + $total
-    );
-
 end

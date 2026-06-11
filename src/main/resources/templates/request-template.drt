@@ -1,54 +1,42 @@
 template header
 
-assistant
-subject
+assistantName
+subjectName
 priority
 
 package rules
 
-import sbnz.szrn.model.AssignmentResult
-import sbnz.szrn.model.Assistant
-import sbnz.szrn.model.Subject
-import sbnz.szrn.model.Preference
-import sbnz.szrn.model.Candidate
+import sbnz.szrn.model.Candidate;
 
-template "requestTemplate"
+template "specificRequestTemplate"
 
-rule "Specific request @{assistant} @{subject}"
-
-salience @{priority}0
-
+rule "Template specific request @{assistantName} -> @{subjectName}"
+salience 65
 when
-
-    $p : Preference(
-        assistant.name == "@{assistant}",
-        subject.name == "@{subject}"
+    $c : Candidate(
+        specificRequestApplied == false,
+        assistant.name == "@{assistantName}",
+        subject.name == "@{subjectName}"
     )
-
-    not Candidate(
-        assistant == $p.getAssistant(),
-        subject == $p.getSubject()
-    )
-
 then
+    int bonus = @{priority} * 15;
 
-    Candidate candidate =
-            new Candidate(
-                    $p.getAssistant(),
-                    $p.getSubject(),
-                    @{priority} * 20,
-                    "Specifican zahtev visokog prioriteta"
-            );
-
-    insert(candidate);
-
-    System.out.println(
-            "[TEMPLATE RULE] "
-            + "@{assistant}"
-            + " -> "
-            + "@{subject}"
+    $c.addScore(
+        bonus,
+        "Template zahtev prioriteta @{priority}."
     );
 
+    $c.setSpecificRequestApplied(true);
+
+    update($c);
+
+    System.out.println(
+        "[TEMPLATE RULE] @{assistantName} -> @{subjectName}"
+        + " | bonus = "
+        + bonus
+        + " | score = "
+        + $c.getScore()
+    );
 end
 
 end template
