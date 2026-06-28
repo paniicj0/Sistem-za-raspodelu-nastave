@@ -10,20 +10,28 @@ import sbnz.szrn.Main;
 import sbnz.szrn.dto.AllocationInput;
 import sbnz.szrn.dto.AllocationOutput;
 import sbnz.szrn.model.AssignmentResult;
+import sbnz.szrn.model.Assistant;
 import sbnz.szrn.model.Candidate;
 import sbnz.szrn.model.Preference;
+import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.RequestTemplateData;
 import sbnz.szrn.model.SpecificRequest;
+import sbnz.szrn.model.Subject;
 import sbnz.szrn.model.ValidationMessage;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class AllocationService {
 
     public AllocationOutput allocate(AllocationInput input) {
+        normalizeReferences(input);
+
         String generatedDrl = generateTemplateRules(input.getSpecificRequests());
 
         KieSession kieSession = createKieSession(generatedDrl);
@@ -70,6 +78,31 @@ public class AllocationService {
         );
     }
 
+
+    private void normalizeReferences(AllocationInput input) {
+        Map<Integer, Assistant> assistantsById = input.getAssistants()
+                .stream()
+                .collect(Collectors.toMap(Assistant::getId, Function.identity()));
+
+        Map<Integer, Subject> subjectsById = input.getSubjects()
+                .stream()
+                .collect(Collectors.toMap(Subject::getId, Function.identity()));
+
+        for (Preference preference : input.getPreferences()) {
+            preference.setAssistant(assistantsById.get(preference.getAssistant().getId()));
+            preference.setSubject(subjectsById.get(preference.getSubject().getId()));
+        }
+
+        for (PreviousAssignment previousAssignment : input.getPreviousAssignments()) {
+            previousAssignment.setAssistant(assistantsById.get(previousAssignment.getAssistant().getId()));
+            previousAssignment.setSubject(subjectsById.get(previousAssignment.getSubject().getId()));
+        }
+
+        for (SpecificRequest specificRequest : input.getSpecificRequests()) {
+            specificRequest.setAssistant(assistantsById.get(specificRequest.getAssistant().getId()));
+            specificRequest.setSubject(subjectsById.get(specificRequest.getSubject().getId()));
+        }
+    }
     private String generateTemplateRules(List<SpecificRequest> specificRequests) {
         List<RequestTemplateData> templateData = new ArrayList<>();
 

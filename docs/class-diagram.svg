@@ -1,119 +1,182 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1040" viewBox="0 0 1500 1040">
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250">
   <defs>
-    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
-      <path d="M2,2 L10,6 L2,10 Z" fill="#344054" />
-    </marker>
     <style>
-      .bg { fill: #f6f7f9; }
-      .box { fill: #ffffff; stroke: #344054; stroke-width: 2; rx: 8; }
-      .title { font: 700 22px Arial, sans-serif; fill: #101828; }
-      .text { font: 16px Arial, sans-serif; fill: #1d2939; }
-      .small { font: 14px Arial, sans-serif; fill: #475467; }
-      .line { stroke: #344054; stroke-width: 2; fill: none; marker-end: url(#arrow); }
-      .label { font: 14px Arial, sans-serif; fill: #344054; }
+      .canvas { fill: #ffffff; }
+      .classBox { fill: #fffdf7; stroke: #111827; stroke-width: 1.6; }
+      .header { fill: #f6f1df; stroke: #111827; stroke-width: 1.2; }
+      .title { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .attr { font: 15px Arial, sans-serif; fill: #111827; }
+      .small { font: 13px Arial, sans-serif; fill: #374151; }
+      .line { stroke: #111827; stroke-width: 1.6; fill: none; }
+      .dash { stroke: #111827; stroke-width: 1.4; fill: none; stroke-dasharray: 7 5; }
+      .mult { font: 700 14px Arial, sans-serif; fill: #111827; }
+      .role { font: 13px Arial, sans-serif; fill: #374151; }
+      .noteBox { fill: #fffdf7; stroke: #6b7280; stroke-width: 1.2; }
+      .noteText { font: 14px Arial, sans-serif; fill: #111827; }
     </style>
   </defs>
-  <rect class="bg" x="0" y="0" width="1500" height="1040" />
-  <text class="title" x="40" y="46">Klasni dijagram modela - Sistem za raspodelu nastave</text>
 
-  <rect class="box" x="80" y="100" width="300" height="220" />
-  <text class="title" x="105" y="135">Assistant</text>
-  <text class="text" x="105" y="170">id: int</text>
-  <text class="text" x="105" y="195">name: String</text>
-  <text class="text" x="105" y="220">targetLoad: int</text>
-  <text class="text" x="105" y="245">winterLoad: int</text>
-  <text class="text" x="105" y="270">summerLoad: int</text>
-  <text class="text" x="105" y="295">maxLoad: int</text>
+  <rect class="canvas" width="1800" height="1250" />
+  <text class="title" x="60" y="45">Sistem za raspodelu nastave - klasni dijagram modela</text>
 
-  <rect class="box" x="1120" y="100" width="300" height="220" />
-  <text class="title" x="1145" y="135">Subject</text>
-  <text class="text" x="1145" y="170">id: int</text>
-  <text class="text" x="1145" y="195">code: String</text>
-  <text class="text" x="1145" y="220">name: String</text>
-  <text class="text" x="1145" y="245">semester: int</text>
-  <text class="text" x="1145" y="270">groups: int</text>
-  <text class="text" x="1145" y="295">hoursPerGroup, totalHours</text>
+  <!-- Assistant -->
+  <rect class="classBox" x="70" y="140" width="310" height="260" />
+  <rect class="header" x="70" y="140" width="310" height="42" />
+  <text class="title" x="175" y="167">Assistant</text>
+  <line class="line" x1="70" y1="182" x2="380" y2="182" />
+  <text class="attr" x="90" y="212">- id: int</text>
+  <text class="attr" x="90" y="237">- name: String</text>
+  <text class="attr" x="90" y="262">- targetLoad: int</text>
+  <text class="attr" x="90" y="287">- winterLoad: int</text>
+  <text class="attr" x="90" y="312">- summerLoad: int</text>
+  <text class="attr" x="90" y="337">- maxLoad: int</text>
+  <text class="attr" x="90" y="362">- placeholder: boolean</text>
+  <line class="line" x1="70" y1="375" x2="380" y2="375" />
+  <text class="attr" x="90" y="392">+ getTotalLoad(): int</text>
 
-  <rect class="box" x="590" y="80" width="320" height="170" />
-  <text class="title" x="615" y="115">Preference</text>
-  <text class="text" x="615" y="150">id: int</text>
-  <text class="text" x="615" y="175">assistant: Assistant</text>
-  <text class="text" x="615" y="200">subject: Subject</text>
-  <text class="text" x="615" y="225">grade: int</text>
+  <!-- Subject -->
+  <rect class="classBox" x="1420" y="140" width="310" height="280" />
+  <rect class="header" x="1420" y="140" width="310" height="42" />
+  <text class="title" x="1540" y="167">Subject</text>
+  <line class="line" x1="1420" y1="182" x2="1730" y2="182" />
+  <text class="attr" x="1440" y="212">- id: int</text>
+  <text class="attr" x="1440" y="237">- code: String</text>
+  <text class="attr" x="1440" y="262">- name: String</text>
+  <text class="attr" x="1440" y="287">- semester: int</text>
+  <text class="attr" x="1440" y="312">- groups: int</text>
+  <text class="attr" x="1440" y="337">- hoursPerGroup: int</text>
+  <text class="attr" x="1440" y="362">- totalHours: int</text>
+  <line class="line" x1="1420" y1="375" x2="1730" y2="375" />
+  <text class="attr" x="1440" y="392">+ isLargeSubject(): boolean</text>
+  <text class="attr" x="1440" y="414">+ getFirstHalfHours(): int</text>
 
-  <rect class="box" x="590" y="300" width="320" height="180" />
-  <text class="title" x="615" y="335">PreviousAssignment</text>
-  <text class="text" x="615" y="370">id: int</text>
-  <text class="text" x="615" y="395">assistant: Assistant</text>
-  <text class="text" x="615" y="420">subject: Subject</text>
-  <text class="text" x="615" y="445">assignedHours: int</text>
+  <!-- Preference -->
+  <rect class="classBox" x="720" y="105" width="360" height="130" />
+  <rect class="header" x="720" y="105" width="360" height="38" />
+  <text class="title" x="852" y="130">Preference</text>
+  <line class="line" x1="720" y1="143" x2="1080" y2="143" />
+  <text class="attr" x="740" y="172">- id: int</text>
+  <text class="attr" x="740" y="197">- grade: int</text>
+  <text class="small" x="740" y="220">veza: assistant + subject + ocena</text>
 
-  <rect class="box" x="590" y="530" width="320" height="200" />
-  <text class="title" x="615" y="565">SpecificRequest</text>
-  <text class="text" x="615" y="600">id: int</text>
-  <text class="text" x="615" y="625">assistant: Assistant</text>
-  <text class="text" x="615" y="650">subject: Subject</text>
-  <text class="text" x="615" y="675">requestedHours: Integer</text>
-  <text class="text" x="615" y="700">priority: int</text>
+  <!-- PreviousAssignment -->
+  <rect class="classBox" x="720" y="285" width="360" height="130" />
+  <rect class="header" x="720" y="285" width="360" height="38" />
+  <text class="title" x="803" y="310">PreviousAssignment</text>
+  <line class="line" x1="720" y1="323" x2="1080" y2="323" />
+  <text class="attr" x="740" y="352">- id: int</text>
+  <text class="attr" x="740" y="377">- assignedHours: int</text>
+  <text class="small" x="740" y="400">prethodna raspodela</text>
 
-  <rect class="box" x="80" y="620" width="360" height="260" />
-  <text class="title" x="105" y="655">Candidate</text>
-  <text class="text" x="105" y="690">assistant: Assistant</text>
-  <text class="text" x="105" y="715">subject: Subject</text>
-  <text class="text" x="105" y="740">score: int</text>
-  <text class="text" x="105" y="765">explanation: String</text>
-  <text class="text" x="105" y="790">previousAssignmentApplied: boolean</text>
-  <text class="text" x="105" y="815">specificRequestApplied: boolean</text>
-  <text class="text" x="105" y="840">overload/subject/hardLoad flags</text>
-  <text class="text" x="105" y="865">assigned: boolean</text>
+  <!-- SpecificRequest -->
+  <rect class="classBox" x="720" y="465" width="360" height="150" />
+  <rect class="header" x="720" y="465" width="360" height="38" />
+  <text class="title" x="818" y="490">SpecificRequest</text>
+  <line class="line" x1="720" y1="503" x2="1080" y2="503" />
+  <text class="attr" x="740" y="532">- id: int</text>
+  <text class="attr" x="740" y="557">- requestedHours: Integer</text>
+  <text class="attr" x="740" y="582">- priority: int</text>
+  <text class="small" x="740" y="605">zahtev profesora/asistenta</text>
 
-  <rect class="box" x="1080" y="620" width="360" height="210" />
-  <text class="title" x="1105" y="655">AssignmentResult</text>
-  <text class="text" x="1105" y="690">assistant: Assistant</text>
-  <text class="text" x="1105" y="715">subject: Subject</text>
-  <text class="text" x="1105" y="740">assignedHours: int</text>
-  <text class="text" x="1105" y="765">score: int</text>
-  <text class="text" x="1105" y="790">explanation: String</text>
+  <!-- Candidate -->
+  <rect class="classBox" x="720" y="665" width="360" height="190" />
+  <rect class="header" x="720" y="665" width="360" height="38" />
+  <text class="title" x="858" y="690">Candidate</text>
+  <line class="line" x1="720" y1="703" x2="1080" y2="703" />
+  <text class="attr" x="740" y="732">- id: int</text>
+  <text class="attr" x="740" y="757">- score: int</text>
+  <text class="attr" x="740" y="782">- explanation: String</text>
+  <text class="attr" x="740" y="807">- assigned: boolean</text>
+  <text class="attr" x="740" y="832">- rule flags: boolean</text>
 
-  <rect class="box" x="590" y="810" width="320" height="150" />
-  <text class="title" x="615" y="845">RequestTemplateData</text>
-  <text class="text" x="615" y="880">assistantName: String</text>
-  <text class="text" x="615" y="905">subjectName: String</text>
-  <text class="text" x="615" y="930">priority, requestedHours</text>
+  <!-- AssignmentResult -->
+  <rect class="classBox" x="720" y="905" width="360" height="155" />
+  <rect class="header" x="720" y="905" width="360" height="38" />
+  <text class="title" x="822" y="930">AssignmentResult</text>
+  <line class="line" x1="720" y1="943" x2="1080" y2="943" />
+  <text class="attr" x="740" y="972">- id: int</text>
+  <text class="attr" x="740" y="997">- assignedHours: int</text>
+  <text class="attr" x="740" y="1022">- score: int</text>
+  <text class="attr" x="740" y="1047">- explanation: String</text>
 
-  <rect class="box" x="1080" y="880" width="360" height="120" />
-  <text class="title" x="1105" y="915">ValidationMessage</text>
-  <text class="text" x="1105" y="950">level: String</text>
-  <text class="text" x="1105" y="975">message: String</text>
+  <!-- Support classes -->
+  <rect class="classBox" x="70" y="960" width="310" height="125" />
+  <rect class="header" x="70" y="960" width="310" height="38" />
+  <text class="title" x="139" y="985">ValidationMessage</text>
+  <line class="line" x1="70" y1="998" x2="380" y2="998" />
+  <text class="attr" x="90" y="1027">- id: int</text>
+  <text class="attr" x="90" y="1052">- level: String</text>
+  <text class="attr" x="90" y="1077">- message: String</text>
 
-  <path class="line" d="M590 165 C500 165, 470 170, 380 190" />
-  <text class="label" x="440" y="150">Preference.assistant</text>
-  <path class="line" d="M910 165 C1000 165, 1030 170, 1120 190" />
-  <text class="label" x="945" y="150">Preference.subject</text>
+  <rect class="classBox" x="1420" y="960" width="310" height="145" />
+  <rect class="header" x="1420" y="960" width="310" height="38" />
+  <text class="title" x="1480" y="985">RequestTemplateData</text>
+  <line class="line" x1="1420" y1="998" x2="1730" y2="998" />
+  <text class="attr" x="1440" y="1027">- assistantName: String</text>
+  <text class="attr" x="1440" y="1052">- subjectName: String</text>
+  <text class="attr" x="1440" y="1077">- priority: int</text>
+  <text class="attr" x="1440" y="1102">- requestedHours: int</text>
 
-  <path class="line" d="M590 390 C500 380, 455 315, 380 260" />
-  <text class="label" x="410" y="350">PreviousAssignment.assistant</text>
-  <path class="line" d="M910 390 C1000 380, 1045 315, 1120 260" />
-  <text class="label" x="930" y="350">PreviousAssignment.subject</text>
+  <!-- Association lines: no direct Assistant-Subject connection -->
+  <!-- Assistant to association classes -->
+  <path class="line" d="M380 170 H720" />
+  <text class="mult" x="395" y="160">1</text>
+  <text class="mult" x="680" y="160">0..*</text>
+  <text class="role" x="470" y="190">assistant</text>
 
-  <path class="line" d="M590 625 C500 560, 430 430, 320 320" />
-  <text class="label" x="360" y="520">SpecificRequest.assistant</text>
-  <path class="line" d="M910 625 C1000 560, 1070 430, 1180 320" />
-  <text class="label" x="930" y="520">SpecificRequest.subject</text>
+  <path class="line" d="M380 350 H720" />
+  <text class="mult" x="395" y="340">1</text>
+  <text class="mult" x="680" y="340">0..*</text>
+  <text class="role" x="470" y="370">assistant</text>
 
-  <path class="line" d="M250 620 C235 500, 230 430, 230 320" />
-  <text class="label" x="95" y="500">Candidate.assistant</text>
-  <path class="line" d="M440 700 C710 580, 980 430, 1120 290" />
-  <text class="label" x="675" y="545">Candidate.subject</text>
+  <path class="line" d="M380 540 H720" />
+  <text class="mult" x="395" y="530">1</text>
+  <text class="mult" x="680" y="530">0..*</text>
+  <text class="role" x="470" y="560">assistant</text>
 
-  <path class="line" d="M1080 705 C800 585, 520 430, 380 290" />
-  <text class="label" x="700" y="625">AssignmentResult.assistant</text>
-  <path class="line" d="M1260 620 C1265 500, 1265 430, 1265 320" />
-  <text class="label" x="1280" y="500">AssignmentResult.subject</text>
+  <path class="line" d="M380 760 H720" />
+  <text class="mult" x="395" y="750">1</text>
+  <text class="mult" x="680" y="750">0..*</text>
+  <text class="role" x="470" y="780">assistant</text>
 
-  <path class="line" d="M750 730 L750 810" />
-  <text class="label" x="770" y="775">SpecificRequest -> template data</text>
+  <path class="line" d="M380 982 H720" />
+  <text class="mult" x="395" y="972">1</text>
+  <text class="mult" x="680" y="972">0..*</text>
+  <text class="role" x="470" y="1002">assistant</text>
 
-  <text class="small" x="40" y="1015">Napomena: Preference, PreviousAssignment, SpecificRequest, Candidate i AssignmentResult su vezne klase izmedju Assistant i Subject.</text>
+  <!-- Association classes to Subject -->
+  <path class="line" d="M1080 170 H1420" />
+  <text class="mult" x="1095" y="160">0..*</text>
+  <text class="mult" x="1388" y="160">1</text>
+  <text class="role" x="1232" y="190">subject</text>
+
+  <path class="line" d="M1080 350 H1420" />
+  <text class="mult" x="1095" y="340">0..*</text>
+  <text class="mult" x="1388" y="340">1</text>
+  <text class="role" x="1232" y="370">subject</text>
+
+  <path class="line" d="M1080 540 H1420" />
+  <text class="mult" x="1095" y="530">0..*</text>
+  <text class="mult" x="1388" y="530">1</text>
+  <text class="role" x="1232" y="560">subject</text>
+
+  <path class="line" d="M1080 760 H1420" />
+  <text class="mult" x="1095" y="750">0..*</text>
+  <text class="mult" x="1388" y="750">1</text>
+  <text class="role" x="1232" y="780">subject</text>
+
+  <path class="line" d="M1080 982 H1420" />
+  <text class="mult" x="1095" y="972">0..*</text>
+  <text class="mult" x="1388" y="972">1</text>
+  <text class="role" x="1232" y="1002">subject</text>
+
+  <!-- Dependency from request to template data -->
+  <path class="dash" d="M1080 585 C1210 650 1330 805 1480 960" />
+  <text class="role" x="1160" y="710">generise podatke za template</text>
+
+  <!-- Note -->
+  <rect class="noteBox" x="575" y="1110" width="650" height="90" />
+  <text class="noteText" x="600" y="1140">Napomena: Assistant i Subject nemaju direktnu vezu.</text>
+  <text class="noteText" x="600" y="1165">Povezani su iskljucivo preko veznih klasa koje nose dodatne podatke.</text>
+  <text class="noteText" x="600" y="1190">Zato je odnos konceptualno M:N, ali nije direktna UML asocijacija Assistant-Subject.</text>
 </svg>
-
