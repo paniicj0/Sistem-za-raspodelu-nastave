@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1040" viewBox="0 0 1500 1040">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#344054" />
+    </marker>
+    <style>
+      .bg { fill: #f6f7f9; }
+      .box { fill: #ffffff; stroke: #344054; stroke-width: 2; rx: 8; }
+      .title { font: 700 22px Arial, sans-serif; fill: #101828; }
+      .text { font: 16px Arial, sans-serif; fill: #1d2939; }
+      .small { font: 14px Arial, sans-serif; fill: #475467; }
+      .line { stroke: #344054; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .label { font: 14px Arial, sans-serif; fill: #344054; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1500" height="1040" />
+  <text class="title" x="40" y="46">Klasni dijagram modela - Sistem za raspodelu nastave</text>
+
+  <rect class="box" x="80" y="100" width="300" height="220" />
+  <text class="title" x="105" y="135">Assistant</text>
+  <text class="text" x="105" y="170">id: int</text>
+  <text class="text" x="105" y="195">name: String</text>
+  <text class="text" x="105" y="220">targetLoad: int</text>
+  <text class="text" x="105" y="245">winterLoad: int</text>
+  <text class="text" x="105" y="270">summerLoad: int</text>
+  <text class="text" x="105" y="295">maxLoad: int</text>
+
+  <rect class="box" x="1120" y="100" width="300" height="220" />
+  <text class="title" x="1145" y="135">Subject</text>
+  <text class="text" x="1145" y="170">id: int</text>
+  <text class="text" x="1145" y="195">code: String</text>
+  <text class="text" x="1145" y="220">name: String</text>
+  <text class="text" x="1145" y="245">semester: int</text>
+  <text class="text" x="1145" y="270">groups: int</text>
+  <text class="text" x="1145" y="295">hoursPerGroup, totalHours</text>
+
+  <rect class="box" x="590" y="80" width="320" height="170" />
+  <text class="title" x="615" y="115">Preference</text>
+  <text class="text" x="615" y="150">id: int</text>
+  <text class="text" x="615" y="175">assistant: Assistant</text>
+  <text class="text" x="615" y="200">subject: Subject</text>
+  <text class="text" x="615" y="225">grade: int</text>
+
+  <rect class="box" x="590" y="300" width="320" height="180" />
+  <text class="title" x="615" y="335">PreviousAssignment</text>
+  <text class="text" x="615" y="370">id: int</text>
+  <text class="text" x="615" y="395">assistant: Assistant</text>
+  <text class="text" x="615" y="420">subject: Subject</text>
+  <text class="text" x="615" y="445">assignedHours: int</text>
+
+  <rect class="box" x="590" y="530" width="320" height="200" />
+  <text class="title" x="615" y="565">SpecificRequest</text>
+  <text class="text" x="615" y="600">id: int</text>
+  <text class="text" x="615" y="625">assistant: Assistant</text>
+  <text class="text" x="615" y="650">subject: Subject</text>
+  <text class="text" x="615" y="675">requestedHours: Integer</text>
+  <text class="text" x="615" y="700">priority: int</text>
+
+  <rect class="box" x="80" y="620" width="360" height="260" />
+  <text class="title" x="105" y="655">Candidate</text>
+  <text class="text" x="105" y="690">assistant: Assistant</text>
+  <text class="text" x="105" y="715">subject: Subject</text>
+  <text class="text" x="105" y="740">score: int</text>
+  <text class="text" x="105" y="765">explanation: String</text>
+  <text class="text" x="105" y="790">previousAssignmentApplied: boolean</text>
+  <text class="text" x="105" y="815">specificRequestApplied: boolean</text>
+  <text class="text" x="105" y="840">overload/subject/hardLoad flags</text>
+  <text class="text" x="105" y="865">assigned: boolean</text>
+
+  <rect class="box" x="1080" y="620" width="360" height="210" />
+  <text class="title" x="1105" y="655">AssignmentResult</text>
+  <text class="text" x="1105" y="690">assistant: Assistant</text>
+  <text class="text" x="1105" y="715">subject: Subject</text>
+  <text class="text" x="1105" y="740">assignedHours: int</text>
+  <text class="text" x="1105" y="765">score: int</text>
+  <text class="text" x="1105" y="790">explanation: String</text>
+
+  <rect class="box" x="590" y="810" width="320" height="150" />
+  <text class="title" x="615" y="845">RequestTemplateData</text>
+  <text class="text" x="615" y="880">assistantName: String</text>
+  <text class="text" x="615" y="905">subjectName: String</text>
+  <text class="text" x="615" y="930">priority, requestedHours</text>
+
+  <rect class="box" x="1080" y="880" width="360" height="120" />
+  <text class="title" x="1105" y="915">ValidationMessage</text>
+  <text class="text" x="1105" y="950">level: String</text>
+  <text class="text" x="1105" y="975">message: String</text>
+
+  <path class="line" d="M590 165 C500 165, 470 170, 380 190" />
+  <text class="label" x="440" y="150">Preference.assistant</text>
+  <path class="line" d="M910 165 C1000 165, 1030 170, 1120 190" />
+  <text class="label" x="945" y="150">Preference.subject</text>
+
+  <path class="line" d="M590 390 C500 380, 455 315, 380 260" />
+  <text class="label" x="410" y="350">PreviousAssignment.assistant</text>
+  <path class="line" d="M910 390 C1000 380, 1045 315, 1120 260" />
+  <text class="label" x="930" y="350">PreviousAssignment.subject</text>
+
+  <path class="line" d="M590 625 C500 560, 430 430, 320 320" />
+  <text class="label" x="360" y="520">SpecificRequest.assistant</text>
+  <path class="line" d="M910 625 C1000 560, 1070 430, 1180 320" />
+  <text class="label" x="930" y="520">SpecificRequest.subject</text>
+
+  <path class="line" d="M250 620 C235 500, 230 430, 230 320" />
+  <text class="label" x="95" y="500">Candidate.assistant</text>
+  <path class="line" d="M440 700 C710 580, 980 430, 1120 290" />
+  <text class="label" x="675" y="545">Candidate.subject</text>
+
+  <path class="line" d="M1080 705 C800 585, 520 430, 380 290" />
+  <text class="label" x="700" y="625">AssignmentResult.assistant</text>
+  <path class="line" d="M1260 620 C1265 500, 1265 430, 1265 320" />
+  <text class="label" x="1280" y="500">AssignmentResult.subject</text>
+
+  <path class="line" d="M750 730 L750 810" />
+  <text class="label" x="770" y="775">SpecificRequest -> template data</text>
+
+  <text class="small" x="40" y="1015">Napomena: Preference, PreviousAssignment, SpecificRequest, Candidate i AssignmentResult su vezne klase izmedju Assistant i Subject.</text>
+</svg>
+

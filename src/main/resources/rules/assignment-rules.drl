@@ -76,6 +76,44 @@ then
 end
 
 
+
+rule "Low preference fallback creates candidate"
+salience 80
+when
+    $p : Preference(
+        $assistant : assistant,
+        $subject : subject,
+        grade >= 2,
+        grade <= 2
+    )
+
+    not Candidate(
+        subject == $subject
+    )
+
+    not Candidate(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    Candidate candidate = new Candidate(
+        0,
+        $assistant,
+        $subject,
+        5,
+        "Niska preferenca, ali kandidat je ukljucen kao fallback da predmet ne ostane nerasporedjen."
+    );
+
+    insert(candidate);
+
+    System.out.println(
+        "[RULE] Low preference fallback creates candidate: "
+        + $assistant.getName()
+        + " -> "
+        + $subject.getName()
+    );
+end
+
 rule "Previous assignment increases score"
 salience 50
 when
@@ -90,14 +128,10 @@ when
         subject == $subject
     )
 then
-    $c.addScore(
-        20,
-        "Asistent je prethodno drzao predmet."
-    );
-
-    $c.setPreviousAssignmentApplied(true);
-
-    update($c);
+    modify($c) {
+        addScore(20, "Asistent je prethodno drzao predmet."),
+        setPreviousAssignmentApplied(true)
+    }
 
     System.out.println(
         "[RULE] Previous assignment increases score: "
@@ -121,14 +155,10 @@ when
 
     eval($assistant.getTotalLoad() + $subject.getTotalHours() > $assistant.getTargetLoad())
 then
-    $c.addScore(
-        -30,
-        "Dodela bi prekoracila ciljano opterecenje."
-    );
-
-    $c.setOverloadPenaltyApplied(true);
-
-    update($c);
+    modify($c) {
+        addScore(-30, "Dodela bi prekoracila ciljano opterecenje."),
+        setOverloadPenaltyApplied(true)
+    }
 
     System.out.println(
         "[RULE] Overload penalty: "
@@ -140,10 +170,82 @@ then
     );
 end
 
+
+rule "Hard load threshold penalty"
+salience 39
+when
+    $c : Candidate(
+        hardLoadPenaltyApplied == false,
+        $assistant : assistant,
+        $subject : subject
+    )
+
+    eval($assistant.getTotalLoad() + $subject.getTotalHours() > 30)
+then
+    modify($c) {
+        addScore(-50, "Velika kazna: dodela bi prebacila asistenta preko 30 casova."),
+        setHardLoadPenaltyApplied(true)
+    }
+
+    System.out.println(
+        "[RULE] Hard load threshold penalty: "
+        + $assistant.getName()
+        + " -> "
+        + $subject.getName()
+        + " | score = "
+        + $c.getScore()
+    );
+end
+
+rule "Subject count per semester penalty"
+salience -9
+when
+    $c : Candidate(
+        subjectCountPenaltyApplied == false,
+        $assistant : assistant,
+        $subject : subject
+    )
+
+    $subjectCount : Number()
+    from accumulate(
+        AssignmentResult(
+            assistant == $assistant,
+            subject.semester == $subject.getSemester()
+        ),
+        count(1)
+    )
+
+    eval($subjectCount.intValue() >= 2)
+then
+    int penalty = $subjectCount.intValue() >= 3 ? -60 : -25;
+    String reason = $subjectCount.intValue() >= 3
+            ? "Velika kazna: asistent bi imao vise od 3 predmeta u semestru."
+            : "Kazna: asistent bi imao vise od 2 predmeta u semestru.";
+
+    modify($c) {
+        addScore(penalty, reason),
+        setSubjectCountPenaltyApplied(true)
+    }
+
+    System.out.println(
+        "[RULE] Subject count penalty: "
+        + $assistant.getName()
+        + " -> "
+        + $subject.getName()
+        + " | current subjects = "
+        + $subjectCount
+        + " | penalty = "
+        + penalty
+        + " | score = "
+        + $c.getScore()
+    );
+end
+
 rule "Best candidate gets small subject"
 salience -10
 when
     $c : Candidate(
+        assigned == false,
         $assistant : assistant,
         $subject : subject,
         $score : score
@@ -151,26 +253,46 @@ when
 
     eval(!$subject.isLargeSubject())
 
+    $assignedHours : Number()
+    from accumulate(
+        AssignmentResult(
+            subject == $subject,
+            $hours : assignedHours
+        ),
+        sum($hours)
+    )
+
+    eval($assignedHours.intValue() < $subject.getTotalHours())
+
     not Candidate(
         subject == $subject,
+        assigned == false,
         score > $score
     )
 
     not AssignmentResult(
-        subject == $subject
+        subject == $subject,
+        assistant == $assistant
     )
 then
+    int hours = $subject.getTotalHours() - $assignedHours.intValue();
+
     AssignmentResult result = new AssignmentResult(
         0,
         $assistant,
         $subject,
-        $subject.getTotalHours(),
+        hours,
         $score,
         "Najbolji kandidat za manji predmet. " + $c.getExplanation()
     );
 
-    $assistant.addLoad($subject.getSemester(), $subject.getTotalHours());
-    update($assistant);
+    modify($assistant) {
+        addLoad($subject.getSemester(), hours)
+    }
+
+    modify($c) {
+        setAssigned(true)
+    }
 
     insert(result);
 
@@ -180,7 +302,7 @@ then
         + " dobija manji predmet "
         + $subject.getName()
         + " | hours = "
-        + $subject.getTotalHours()
+        + hours
         + " | score = "
         + $score
     );
@@ -190,6 +312,7 @@ rule "Best candidate gets first part of large subject"
 salience -10
 when
     $c : Candidate(
+        assigned == false,
         $assistant : assistant,
         $subject : subject,
         $score : score
@@ -197,8 +320,20 @@ when
 
     eval($subject.isLargeSubject())
 
+    $assignedHours : Number()
+    from accumulate(
+        AssignmentResult(
+            subject == $subject,
+            $hours : assignedHours
+        ),
+        sum($hours)
+    )
+
+    eval($assignedHours.intValue() < $subject.getTotalHours())
+
     not Candidate(
         subject == $subject,
+        assigned == false,
         score > $score
     )
 
@@ -207,7 +342,8 @@ when
         assistant == $assistant
     )
 then
-    int hours = $subject.getFirstHalfHours();
+    int remainingHours = $subject.getTotalHours() - $assignedHours.intValue();
+    int hours = Math.min($subject.getFirstHalfHours(), remainingHours);
 
     AssignmentResult result = new AssignmentResult(
         0,
@@ -218,8 +354,13 @@ then
         "Najbolji kandidat za prvi deo velikog predmeta. " + $c.getExplanation()
     );
 
-    $assistant.addLoad($subject.getSemester(), hours);
-    update($assistant);
+    modify($assistant) {
+        addLoad($subject.getSemester(), hours)
+    }
+
+    modify($c) {
+        setAssigned(true)
+    }
 
     insert(result);
 
@@ -245,7 +386,19 @@ when
 
     eval($subject.isLargeSubject())
 
+    $assignedHours : Number()
+    from accumulate(
+        AssignmentResult(
+            subject == $subject,
+            $hours : assignedHours
+        ),
+        sum($hours)
+    )
+
+    eval($assignedHours.intValue() < $subject.getTotalHours())
+
     $c : Candidate(
+        assigned == false,
         subject == $subject,
         assistant != $firstAssistant,
         $assistant : assistant,
@@ -254,6 +407,7 @@ when
 
     not Candidate(
         subject == $subject,
+        assigned == false,
         assistant != $firstAssistant,
         score > $score
     )
@@ -263,7 +417,8 @@ when
         assistant == $assistant
     )
 then
-    int hours = $subject.getSecondHalfHours();
+    int remainingHours = $subject.getTotalHours() - $assignedHours.intValue();
+    int hours = Math.min($subject.getSecondHalfHours(), remainingHours);
 
     AssignmentResult result = new AssignmentResult(
         0,
@@ -274,8 +429,13 @@ then
         "Drugi najbolji kandidat za drugi deo velikog predmeta. " + $c.getExplanation()
     );
 
-    $assistant.addLoad($subject.getSemester(), hours);
-    update($assistant);
+    modify($assistant) {
+        addLoad($subject.getSemester(), hours)
+    }
+
+    modify($c) {
+        setAssigned(true)
+    }
 
     insert(result);
 
@@ -388,3 +548,5 @@ then
         + " casova."
     );
 end
+
+

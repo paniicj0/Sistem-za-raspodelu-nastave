@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="sr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistem za raspodelu nastave</title>
+    <style>
+        :root {
+            --bg: #f6f7f9;
+            --panel: #ffffff;
+            --text: #1d2430;
+            --muted: #667085;
+            --line: #d9dee7;
+            --accent: #1d6f5f;
+            --accent-strong: #145246;
+            --danger: #b42318;
+            --warning: #b54708;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        header {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            padding: 20px 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 0;
+        }
+
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            min-height: 38px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: white;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: white;
+            color: var(--accent-strong);
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.65;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        section {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        section.full {
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            margin: 0;
+            padding: 14px 16px;
+            font-size: 17px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .content {
+            padding: 14px 16px;
+            overflow-x: auto;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .metric strong {
+            font-size: 22px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 520px;
+        }
+
+        th,
+        td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .message.ERROR {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .message.WARNING {
+            color: var(--warning);
+            font-weight: 700;
+        }
+
+        pre,
+        textarea {
+            width: 100%;
+            min-height: 280px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 12px;
+            overflow: auto;
+            background: #101828;
+            color: #f2f4f7;
+            font-size: 13px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+        }
+
+        textarea {
+            resize: vertical;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        .status {
+            min-height: 22px;
+            margin-bottom: 14px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 880px) {
+            main {
+                padding: 16px;
+            }
+
+            .grid,
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Sistem za raspodelu nastave</h1>
+</header>
+<main>
+    <div class="toolbar">
+        <button id="loadDemo" type="button">Ucitaj testne podatke</button>
+        <button id="runDemo" type="button">Pokreni demo raspodelu</button>
+        <button id="runCustom" type="button" class="secondary">Pokreni JSON iz editora</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="metrics">
+        <div class="metric"><span>Aktivirana pravila</span><strong id="firedRules">0</strong></div>
+        <div class="metric"><span>Dodeljeni casovi</span><strong id="totalHours">0</strong></div>
+        <div class="metric"><span>Prosecna preferenca</span><strong id="avgPreference">0.00</strong></div>
+        <div class="metric"><span>Validacione poruke</span><strong id="validationCount">0</strong></div>
+    </div>
+
+    <div class="grid">
+        <section>
+            <h2>Testni ulaz</h2>
+            <div class="content">
+                <textarea id="inputJson" spellcheck="false"></textarea>
+            </div>
+        </section>
+
+        <section>
+            <h2>Raspodela</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Asistent</th>
+                        <th>Predmet</th>
+                        <th>Casovi</th>
+                        <th>Score</th>
+                        <th>Obrazlozenje</th>
+                    </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Kandidati</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Asistent</th>
+                        <th>Predmet</th>
+                        <th>Score</th>
+                        <th>Obrazlozenje</th>
+                    </tr>
+                    </thead>
+                    <tbody id="candidatesBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2>Validacija</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Nivo</th>
+                        <th>Poruka</th>
+                    </tr>
+                    </thead>
+                    <tbody id="validationBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="full">
+            <h2>Negativna objasnjenja</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Zasto kandidat nije izabran</th>
+                    </tr>
+                    </thead>
+                    <tbody id="negativeBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="full">
+            <h2>Generisana template pravila</h2>
+            <div class="content">
+                <pre id="generatedDrl"></pre>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    const els = {
+        status: document.getElementById("status"),
+        inputJson: document.getElementById("inputJson"),
+        firedRules: document.getElementById("firedRules"),
+        totalHours: document.getElementById("totalHours"),
+        avgPreference: document.getElementById("avgPreference"),
+        validationCount: document.getElementById("validationCount"),
+        resultsBody: document.getElementById("resultsBody"),
+        candidatesBody: document.getElementById("candidatesBody"),
+        validationBody: document.getElementById("validationBody"),
+        negativeBody: document.getElementById("negativeBody"),
+        generatedDrl: document.getElementById("generatedDrl")
+    };
+
+    document.getElementById("loadDemo").addEventListener("click", loadDemoInput);
+    document.getElementById("runDemo").addEventListener("click", runDemoAllocation);
+    document.getElementById("runCustom").addEventListener("click", runCustomAllocation);
+
+    function setStatus(message) {
+        els.status.textContent = message;
+    }
+
+    function setBusy(isBusy) {
+        document.querySelectorAll("button").forEach((button) => {
+            button.disabled = isBusy;
+        });
+    }
+
+    async function requestJson(url, options) {
+        setBusy(true);
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            return await response.json();
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function loadDemoInput() {
+        setStatus("Ucitavanje testnih podataka...");
+        const input = await requestJson("/api/demo-input");
+        els.inputJson.value = JSON.stringify(input, null, 2);
+        setStatus("Testni podaci su ucitani.");
+    }
+
+    async function runDemoAllocation() {
+        setStatus("Pokretanje demo raspodele...");
+        const output = await requestJson("/api/demo-allocation");
+        renderOutput(output);
+        setStatus("Demo raspodela je zavrsena.");
+    }
+
+    async function runCustomAllocation() {
+        setStatus("Pokretanje raspodele iz JSON editora...");
+        const input = JSON.parse(els.inputJson.value);
+        const output = await requestJson("/api/allocate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(input)
+        });
+        renderOutput(output);
+        setStatus("Raspodela iz JSON editora je zavrsena.");
+    }
+
+    function renderOutput(output) {
+        els.firedRules.textContent = output.firedRules;
+        els.totalHours.textContent = output.totalAssignedHours;
+        els.avgPreference.textContent = Number(output.averagePreference).toFixed(2);
+        els.validationCount.textContent = output.validationMessages.length;
+        els.resultsBody.innerHTML = output.assignmentResults.map(renderResult).join("");
+        els.candidatesBody.innerHTML = output.candidates.map(renderCandidate).join("");
+        els.validationBody.innerHTML = output.validationMessages.map(renderValidation).join("");
+        els.negativeBody.innerHTML = (output.negativeExplanations || []).map(renderNegativeExplanation).join("");
+        els.generatedDrl.textContent = output.generatedDrl || "";
+    }
+
+    function renderResult(result) {
+        return `<tr>
+            <td>${escapeHtml(result.assistant.name)}</td>
+            <td>${escapeHtml(result.subject.name)}</td>
+            <td>${result.assignedHours}</td>
+            <td>${result.score}</td>
+            <td>${escapeHtml(result.explanation)}</td>
+        </tr>`;
+    }
+
+    function renderCandidate(candidate) {
+        return `<tr>
+            <td>${escapeHtml(candidate.assistant.name)}</td>
+            <td>${escapeHtml(candidate.subject.name)}</td>
+            <td>${candidate.score}</td>
+            <td>${escapeHtml(candidate.explanation)}</td>
+        </tr>`;
+    }
+
+    function renderValidation(message) {
+        return `<tr>
+            <td class="message ${escapeHtml(message.level)}">${escapeHtml(message.level)}</td>
+            <td>${escapeHtml(message.message)}</td>
+        </tr>`;
+    }
+
+    function renderNegativeExplanation(explanation) {
+        return `<tr>
+            <td>${escapeHtml(explanation)}</td>
+        </tr>`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    loadDemoInput().catch((error) => setStatus(error.message));
+</script>
+</body>
+</html>

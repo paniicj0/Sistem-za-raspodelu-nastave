@@ -3,14 +3,51 @@ template header
 assistantName
 subjectName
 priority
+requestedHours
+hasRequestedHours
 
 package rules
 
+import sbnz.szrn.model.Assistant;
+import sbnz.szrn.model.AssignmentResult;
 import sbnz.szrn.model.Candidate;
+import sbnz.szrn.model.Subject;
 
 template "specificRequestTemplate"
 
-rule "Template specific request @{assistantName} -> @{subjectName}"
+rule "Template creates requested candidate @{assistantName} -> @{subjectName}"
+salience 110
+when
+    $assistant : Assistant(name == "@{assistantName}")
+    $subject : Subject(name == "@{subjectName}")
+
+    not Candidate(
+        assistant == $assistant,
+        subject == $subject
+    )
+then
+    int bonus = @{priority} * 15;
+
+    Candidate candidate = new Candidate(
+        0,
+        $assistant,
+        $subject,
+        bonus,
+        "Template zahtev prioriteta @{priority}. Trazeni broj casova: @{requestedHours}."
+    );
+
+    candidate.setSpecificRequestApplied(true);
+
+    insert(candidate);
+
+    System.out.println(
+        "[TEMPLATE RULE] created requested candidate @{assistantName} -> @{subjectName}"
+        + " | bonus = "
+        + bonus
+    );
+end
+
+rule "Template modifies requested candidate @{assistantName} -> @{subjectName}"
 salience 65
 when
     $c : Candidate(
@@ -21,21 +58,82 @@ when
 then
     int bonus = @{priority} * 15;
 
-    $c.addScore(
-        bonus,
-        "Template zahtev prioriteta @{priority}."
-    );
-
-    $c.setSpecificRequestApplied(true);
-
-    update($c);
+    modify($c) {
+        addScore(bonus, "Template zahtev prioriteta @{priority}. Trazeni broj casova: @{requestedHours}."),
+        setSpecificRequestApplied(true)
+    }
 
     System.out.println(
-        "[TEMPLATE RULE] @{assistantName} -> @{subjectName}"
+        "[TEMPLATE RULE] modified requested candidate @{assistantName} -> @{subjectName}"
         + " | bonus = "
         + bonus
         + " | score = "
         + $c.getScore()
+    );
+end
+
+rule "Template assigns requested hours @{assistantName} -> @{subjectName}"
+salience -8
+when
+    eval(@{hasRequestedHours})
+
+    $c : Candidate(
+        assigned == false,
+        specificRequestApplied == true,
+        assistant.name == "@{assistantName}",
+        subject.name == "@{subjectName}",
+        $assistant : assistant,
+        $subject : subject,
+        $score : score
+    )
+
+    $assignedHours : Number()
+    from accumulate(
+        AssignmentResult(
+            subject == $subject,
+            $hours : assignedHours
+        ),
+        sum($hours)
+    )
+
+    eval($assignedHours.intValue() < $subject.getTotalHours())
+
+    not AssignmentResult(
+        subject == $subject,
+        assistant == $assistant
+    )
+then
+    int requestedHours = @{requestedHours};
+    int remainingHours = $subject.getTotalHours() - $assignedHours.intValue();
+    int hours = Math.min(requestedHours, remainingHours);
+
+    AssignmentResult result = new AssignmentResult(
+        0,
+        $assistant,
+        $subject,
+        hours,
+        $score,
+        "Dodela trazenog broja casova iz specificnog zahteva. " + $c.getExplanation()
+    );
+
+    modify($assistant) {
+        addLoad($subject.getSemester(), hours)
+    }
+
+    modify($c) {
+        setAssigned(true)
+    }
+
+    insert(result);
+
+    System.out.println(
+        "[TEMPLATE RESULT] @{assistantName} -> @{subjectName}"
+        + " | requested hours = "
+        + requestedHours
+        + " | assigned hours = "
+        + hours
+        + " | score = "
+        + $score
     );
 end
 

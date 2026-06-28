@@ -17,6 +17,9 @@ public class Candidate {
     private boolean previousAssignmentApplied;
     private boolean specificRequestApplied;
     private boolean overloadPenaltyApplied;
+    private boolean subjectCountPenaltyApplied;
+    private boolean hardLoadPenaltyApplied;
+    private boolean assigned;
 
     public Candidate(int id, Assistant assistant, Subject subject, int score, String explanation) {
         this.id = id;
@@ -27,6 +30,9 @@ public class Candidate {
         this.previousAssignmentApplied = false;
         this.specificRequestApplied = false;
         this.overloadPenaltyApplied = false;
+        this.subjectCountPenaltyApplied = false;
+        this.hardLoadPenaltyApplied = false;
+        this.assigned = false;
     }
 
     public void addScore(int value, String reason) {
