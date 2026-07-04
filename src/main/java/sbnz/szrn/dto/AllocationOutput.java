@@ -1,6 +1,7 @@
 package sbnz.szrn.dto;
 
 import sbnz.szrn.model.AssignmentResult;
+import sbnz.szrn.model.BackwardChainTrace;
 import sbnz.szrn.model.Candidate;
 import sbnz.szrn.model.ValidationMessage;
 
@@ -12,6 +13,7 @@ public class AllocationOutput {
     private List<AssignmentResult> assignmentResults;
     private List<ValidationMessage> validationMessages;
     private List<String> negativeExplanations;
+    private List<BackwardChainTrace> backwardChainTraces;
     private int firedRules;
     private int totalAssignedHours;
     private double averagePreference;
@@ -22,6 +24,7 @@ public class AllocationOutput {
             List<AssignmentResult> assignmentResults,
             List<ValidationMessage> validationMessages,
             List<String> negativeExplanations,
+            List<BackwardChainTrace> backwardChainTraces,
             int firedRules,
             int totalAssignedHours,
             double averagePreference,
@@ -31,6 +34,7 @@ public class AllocationOutput {
         this.assignmentResults = assignmentResults;
         this.validationMessages = validationMessages;
         this.negativeExplanations = negativeExplanations;
+        this.backwardChainTraces = backwardChainTraces;
         this.firedRules = firedRules;
         this.totalAssignedHours = totalAssignedHours;
         this.averagePreference = averagePreference;
@@ -51,6 +55,10 @@ public class AllocationOutput {
 
     public List<String> getNegativeExplanations() {
         return negativeExplanations;
+    }
+
+    public List<BackwardChainTrace> getBackwardChainTraces() {
+        return backwardChainTraces;
     }
 
     public int getFiredRules() {

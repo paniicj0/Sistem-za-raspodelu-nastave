@@ -11,12 +11,14 @@ import sbnz.szrn.dto.AllocationInput;
 import sbnz.szrn.dto.AllocationOutput;
 import sbnz.szrn.model.AssignmentResult;
 import sbnz.szrn.model.Assistant;
+import sbnz.szrn.model.BackwardChainTrace;
 import sbnz.szrn.model.Candidate;
 import sbnz.szrn.model.Preference;
 import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.RequestTemplateData;
 import sbnz.szrn.model.SpecificRequest;
 import sbnz.szrn.model.Subject;
+import sbnz.szrn.model.SubjectRelation;
 import sbnz.szrn.model.ValidationMessage;
 
 import java.io.InputStream;
@@ -71,6 +73,7 @@ public class AllocationService {
                 assignmentResults,
                 validationMessages,
                 explainNegativeDecisions(candidates, assignmentResults),
+                buildBackwardChainTraces(input, candidates),
                 firedRules,
                 totalAssignedHours,
                 averagePreference,
@@ -96,6 +99,11 @@ public class AllocationService {
         for (PreviousAssignment previousAssignment : input.getPreviousAssignments()) {
             previousAssignment.setAssistant(assistantsById.get(previousAssignment.getAssistant().getId()));
             previousAssignment.setSubject(subjectsById.get(previousAssignment.getSubject().getId()));
+        }
+
+        for (SubjectRelation subjectRelation : input.getSubjectRelations()) {
+            subjectRelation.setSource(subjectsById.get(subjectRelation.getSource().getId()));
+            subjectRelation.setTarget(subjectsById.get(subjectRelation.getTarget().getId()));
         }
 
         for (SpecificRequest specificRequest : input.getSpecificRequests()) {
@@ -147,6 +155,7 @@ public class AllocationService {
         input.getSubjects().forEach(kieSession::insert);
         input.getPreferences().forEach(kieSession::insert);
         input.getPreviousAssignments().forEach(kieSession::insert);
+        input.getSubjectRelations().forEach(kieSession::insert);
         input.getSpecificRequests().forEach(kieSession::insert);
     }
 
@@ -222,6 +231,95 @@ public class AllocationService {
         }
 
         return explanations;
+    }
+
+    private List<BackwardChainTrace> buildBackwardChainTraces(
+            AllocationInput input,
+            List<Candidate> candidates
+    ) {
+        List<BackwardChainTrace> traces = new ArrayList<>();
+
+        for (Candidate candidate : candidates) {
+            if (!candidate.isRelatedPreviousAssignmentApplied()) {
+                continue;
+            }
+
+            for (PreviousAssignment previousAssignment : input.getPreviousAssignments()) {
+                if (previousAssignment.getAssistant() != candidate.getAssistant()) {
+                    continue;
+                }
+
+                if (previousAssignment.getSubject() == candidate.getSubject()) {
+                    continue;
+                }
+
+                List<Subject> chain = findSubjectChain(
+                        candidate.getSubject(),
+                        previousAssignment.getSubject(),
+                        input.getSubjectRelations(),
+                        new ArrayList<>()
+                );
+
+                if (!chain.isEmpty()) {
+                    traces.add(new BackwardChainTrace(
+                            candidate.getAssistant(),
+                            candidate.getSubject(),
+                            previousAssignment.getSubject(),
+                            formatSubjectChain(chain),
+                            12,
+                            "Drools query relatedSubject je rekurzivno dokazao da je kandidatov predmet povezan sa predmetom koji je asistent ranije drzao."
+                    ));
+                    break;
+                }
+            }
+        }
+
+        return traces;
+    }
+
+    private List<Subject> findSubjectChain(
+            Subject source,
+            Subject target,
+            List<SubjectRelation> relations,
+            List<Subject> visited
+    ) {
+        if (visited.contains(source)) {
+            return List.of();
+        }
+
+        List<Subject> nextVisited = new ArrayList<>(visited);
+        nextVisited.add(source);
+
+        for (SubjectRelation relation : relations) {
+            if (relation.getSource() != source) {
+                continue;
+            }
+
+            if (relation.getTarget() == target) {
+                List<Subject> chain = new ArrayList<>(nextVisited);
+                chain.add(target);
+                return chain;
+            }
+
+            List<Subject> chain = findSubjectChain(
+                    relation.getTarget(),
+                    target,
+                    relations,
+                    nextVisited
+            );
+
+            if (!chain.isEmpty()) {
+                return chain;
+            }
+        }
+
+        return List.of();
+    }
+
+    private String formatSubjectChain(List<Subject> chain) {
+        return chain.stream()
+                .map(subject -> subject.getCode() + " (" + subject.getName() + ")")
+                .collect(Collectors.joining(" -> "));
     }
 
     private String buildNegativeDecisionExplanation(

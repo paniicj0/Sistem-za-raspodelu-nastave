@@ -6,6 +6,7 @@ import sbnz.szrn.model.Preference;
 import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.SpecificRequest;
 import sbnz.szrn.model.Subject;
+import sbnz.szrn.model.SubjectRelation;
 
 import java.util.List;
 
@@ -100,6 +101,14 @@ public class DemoDataFactory {
                 new PreviousAssignment(6, zeljko, ml, 6)
         );
 
+        List<SubjectRelation> subjectRelations = List.of(
+                new SubjectRelation(1, web, osnove, "related"),
+                new SubjectRelation(2, nwt, web, "related"),
+                new SubjectRelation(3, isa, osnove, "related"),
+                new SubjectRelation(4, ml, isa, "related"),
+                new SubjectRelation(5, numerika, osnove, "related")
+        );
+
         List<SpecificRequest> specificRequests = List.of(
                 new SpecificRequest(1, milan, osnove, null, 5),
                 new SpecificRequest(2, bojana, web, 3, 4),
@@ -113,6 +122,7 @@ public class DemoDataFactory {
                 subjects,
                 preferences,
                 previousAssignments,
+                subjectRelations,
                 specificRequests
         );
     }

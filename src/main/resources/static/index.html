@@ -276,6 +276,24 @@
         </section>
 
         <section class="full">
+            <h2>Backward-chain trag</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Asistent</th>
+                        <th>Kandidat za predmet</th>
+                        <th>Prethodno iskustvo</th>
+                        <th>Rekurzivni lanac</th>
+                        <th>Efekat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="backwardChainBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="full">
             <h2>Negativna objasnjenja</h2>
             <div class="content">
                 <table>
@@ -288,13 +306,7 @@
                 </table>
             </div>
         </section>
-
-        <section class="full">
-            <h2>Generisana template pravila</h2>
-            <div class="content">
-                <pre id="generatedDrl"></pre>
-            </div>
-        </section>
+        
     </div>
 </main>
 
@@ -309,6 +321,7 @@
         resultsBody: document.getElementById("resultsBody"),
         candidatesBody: document.getElementById("candidatesBody"),
         validationBody: document.getElementById("validationBody"),
+        backwardChainBody: document.getElementById("backwardChainBody"),
         negativeBody: document.getElementById("negativeBody"),
         generatedDrl: document.getElementById("generatedDrl")
     };
@@ -374,6 +387,7 @@
         els.resultsBody.innerHTML = output.assignmentResults.map(renderResult).join("");
         els.candidatesBody.innerHTML = output.candidates.map(renderCandidate).join("");
         els.validationBody.innerHTML = output.validationMessages.map(renderValidation).join("");
+        els.backwardChainBody.innerHTML = (output.backwardChainTraces || []).map(renderBackwardChainTrace).join("");
         els.negativeBody.innerHTML = (output.negativeExplanations || []).map(renderNegativeExplanation).join("");
         els.generatedDrl.textContent = output.generatedDrl || "";
     }
@@ -401,6 +415,16 @@
         return `<tr>
             <td class="message ${escapeHtml(message.level)}">${escapeHtml(message.level)}</td>
             <td>${escapeHtml(message.message)}</td>
+        </tr>`;
+    }
+
+    function renderBackwardChainTrace(trace) {
+        return `<tr>
+            <td>${escapeHtml(trace.assistant.name)}</td>
+            <td>${escapeHtml(trace.candidateSubject.name)}</td>
+            <td>${escapeHtml(trace.previousSubject.name)}</td>
+            <td>${escapeHtml(trace.relationChain)}</td>
+            <td>+${trace.bonus} score. ${escapeHtml(trace.explanation)}</td>
         </tr>`;
     }
 

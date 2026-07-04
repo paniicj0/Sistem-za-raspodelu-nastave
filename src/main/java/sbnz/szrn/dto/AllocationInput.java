@@ -5,6 +5,7 @@ import sbnz.szrn.model.Preference;
 import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.SpecificRequest;
 import sbnz.szrn.model.Subject;
+import sbnz.szrn.model.SubjectRelation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ public class AllocationInput {
     private List<Subject> subjects = new ArrayList<>();
     private List<Preference> preferences = new ArrayList<>();
     private List<PreviousAssignment> previousAssignments = new ArrayList<>();
+    private List<SubjectRelation> subjectRelations = new ArrayList<>();
     private List<SpecificRequest> specificRequests = new ArrayList<>();
 
     public AllocationInput() {
@@ -31,6 +33,22 @@ public class AllocationInput {
         this.subjects = subjects;
         this.preferences = preferences;
         this.previousAssignments = previousAssignments;
+        this.specificRequests = specificRequests;
+    }
+
+    public AllocationInput(
+            List<Assistant> assistants,
+            List<Subject> subjects,
+            List<Preference> preferences,
+            List<PreviousAssignment> previousAssignments,
+            List<SubjectRelation> subjectRelations,
+            List<SpecificRequest> specificRequests
+    ) {
+        this.assistants = assistants;
+        this.subjects = subjects;
+        this.preferences = preferences;
+        this.previousAssignments = previousAssignments;
+        this.subjectRelations = subjectRelations;
         this.specificRequests = specificRequests;
     }
 
@@ -64,6 +82,14 @@ public class AllocationInput {
 
     public void setPreviousAssignments(List<PreviousAssignment> previousAssignments) {
         this.previousAssignments = previousAssignments;
+    }
+
+    public List<SubjectRelation> getSubjectRelations() {
+        return subjectRelations;
+    }
+
+    public void setSubjectRelations(List<SubjectRelation> subjectRelations) {
+        this.subjectRelations = subjectRelations;
     }
 
     public List<SpecificRequest> getSpecificRequests() {

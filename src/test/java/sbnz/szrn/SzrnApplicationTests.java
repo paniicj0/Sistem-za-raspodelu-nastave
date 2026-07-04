@@ -8,7 +8,9 @@ import sbnz.szrn.dto.AllocationInput;
 import sbnz.szrn.dto.AllocationOutput;
 import sbnz.szrn.model.Assistant;
 import sbnz.szrn.model.Preference;
+import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.Subject;
+import sbnz.szrn.model.SubjectRelation;
 import sbnz.szrn.service.AllocationService;
 
 import java.util.List;
@@ -65,5 +67,30 @@ class SzrnApplicationTests {
         assertEquals(1, output.getAssignmentResults().size());
         assertTrue(output.getCandidates().get(0).getExplanation().contains("fallback"));
         assertTrue(output.getValidationMessages().isEmpty());
+    }
+
+    @Test
+    void recursiveBackwardChainAddsRelatedPreviousAssignmentBonus() {
+        Assistant assistant = new Assistant(1, "Iskusan Asistent", 20, 0, 0);
+        Subject basic = new Subject(1, "BASIC", "Osnovni predmet", 1, 1, 2);
+        Subject middle = new Subject(2, "MID", "Srednji predmet", 1, 1, 2);
+        Subject advanced = new Subject(3, "ADV", "Napredni predmet", 1, 1, 2);
+
+        AllocationInput input = new AllocationInput(
+                List.of(assistant),
+                List.of(basic, middle, advanced),
+                List.of(new Preference(1, assistant, advanced, 3)),
+                List.of(new PreviousAssignment(1, assistant, basic, 2)),
+                List.of(
+                        new SubjectRelation(1, advanced, middle, "related"),
+                        new SubjectRelation(2, middle, basic, "related")
+                ),
+                List.of()
+        );
+
+        AllocationOutput output = new AllocationService().allocate(input);
+
+        assertEquals(1, output.getAssignmentResults().size());
+        assertTrue(output.getCandidates().get(0).getExplanation().contains("Rekurzivni backward-chain query"));
     }
 }

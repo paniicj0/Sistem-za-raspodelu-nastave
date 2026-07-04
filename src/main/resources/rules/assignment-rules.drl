@@ -6,8 +6,35 @@ import sbnz.szrn.model.Subject;
 import sbnz.szrn.model.Preference;
 import sbnz.szrn.model.PreviousAssignment;
 import sbnz.szrn.model.SpecificRequest;
+import sbnz.szrn.model.SubjectRelation;
 import sbnz.szrn.model.Candidate;
 import sbnz.szrn.model.AssignmentResult;
+
+query directlyRelatedSubject(Subject $source, Subject $target)
+    SubjectRelation(source == $source, target == $target)
+end
+
+query relatedSubject(Subject $source, Subject $target)
+    (
+        directlyRelatedSubject($source, $target;)
+    or
+        (
+            SubjectRelation(source == $source, $middle : target)
+            and
+            relatedSubject($middle, $target;)
+        )
+    )
+end
+
+query assistantPreviouslyTaught(Assistant $assistant, Subject $subject)
+    PreviousAssignment(assistant == $assistant, subject == $subject)
+end
+
+query assistantHasRelatedPreviousExperience(Assistant $assistant, Subject $candidateSubject, Subject $previousSubject)
+    assistantPreviouslyTaught($assistant, $previousSubject;)
+    eval($previousSubject != $candidateSubject)
+    relatedSubject($candidateSubject, $previousSubject;)
+end
 
 rule "High preference creates candidate"
 salience 100
@@ -136,6 +163,35 @@ then
     System.out.println(
         "[RULE] Previous assignment increases score: "
         + $assistant.getName()
+        + " -> "
+        + $subject.getName()
+        + " | score = "
+        + $c.getScore()
+    );
+end
+
+
+rule "Related previous assignment increases score through backward chain"
+salience 49
+when
+    $c : Candidate(
+        relatedPreviousAssignmentApplied == false,
+        $assistant : assistant,
+        $subject : subject
+    )
+
+    assistantHasRelatedPreviousExperience($assistant, $subject, $previousSubject;)
+then
+    modify($c) {
+        addScore(12, "Rekurzivni backward-chain query je pronasao prethodno iskustvo na povezanom predmetu."),
+        setRelatedPreviousAssignmentApplied(true)
+    }
+
+    System.out.println(
+        "[RULE] Related previous assignment via backward chain: "
+        + $assistant.getName()
+        + " | "
+        + $previousSubject.getName()
         + " -> "
         + $subject.getName()
         + " | score = "

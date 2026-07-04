@@ -16,6 +16,7 @@ public class Candidate {
     private String explanation;
     private boolean previousAssignmentApplied;
     private boolean specificRequestApplied;
+    private boolean relatedPreviousAssignmentApplied;
     private boolean overloadPenaltyApplied;
     private boolean subjectCountPenaltyApplied;
     private boolean hardLoadPenaltyApplied;
@@ -29,6 +30,7 @@ public class Candidate {
         this.explanation = explanation;
         this.previousAssignmentApplied = false;
         this.specificRequestApplied = false;
+        this.relatedPreviousAssignmentApplied = false;
         this.overloadPenaltyApplied = false;
         this.subjectCountPenaltyApplied = false;
         this.hardLoadPenaltyApplied = false;
